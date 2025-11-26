@@ -45,12 +45,15 @@ This part requires the most tinkering to fit your situation. The example is tune
 There are 2 example account blocks in this file:
 1. The first is for an account you want to keep using in the cloud, but you want a local backup/archive as insurance in case you lose the account.
 2. Second scenario applies if the account belongs to a former employee: preserve the emails, then deactivate the account and discontinue billing.
-*Feel free to delete any account block that doesn't apply to your situation.
+3. *Feel free to delete any account block that doesn't apply to your situation.
 
 Search for these keywords and replace them with your own account information:
+```
 - username1
 - gmail.com
+- username2
 - mydomain.com
+```
 
 ### PREVIEW: Use `mbsync` to ask server for list of all folders
 This tests whether your config and app password works.
