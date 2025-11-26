@@ -86,7 +86,9 @@ Example: `docker kill 7d0faaa765ac`
 
 # Verify Everything!
 ### VERIFY: Check size of mailboxes on disk
-`du -sh mail/*`
+```bash
+du -sh mail/*
+```
 
 ### CHECK: Google Admin web console for size of gmail usage. Check against the size on disk and number of emails downloaded locally.
 Replace `username2@mydomain.com` and `redacted_app_password` with your own credentials
@@ -104,10 +106,13 @@ d logout
 
 ### Log into Roundcube to verify everything is there.
 Go to: http://localhost:8000   # (or whatever ip your docker host is on)
+
 User: username2
+
 Pass: redactedlocalpass   # this is the password that you defined in `dovecot/users`
 #### Turn on folders (some of my preferred settings):
 Roundcube > Settings > Folders > flip on gmail folders
+
 Roundcube > Settings > Preferences > Displaying Messages > Allow remote resources (images, styles) > always > Save
 
 
@@ -141,8 +146,7 @@ Adapt the folder path below to wherever you set up your `repo-mail` folder.
 ```bash
 0 2 * * * cd /path/to/repo-mail && docker compose run --rm fetcher mbsync -c /home/app/config/.mbsyncrc long-term-username2-gmail
 ```
-## If you want to sync all the blocks in `.mbsyncrc` then
-use `-a` above instead of `-c /home/app/config/.mbsyncrc long-term-username2-gmail`
+If you want to sync all the blocks in `.mbsyncrc` then use `-a` above instead of `-c /home/app/config/.mbsyncrc long-term-username2-gmail`
 
 
 # Process the "next" account
@@ -169,5 +173,7 @@ cd repo-mail
 docker compose up -d
 ```
 Open roundcube http://localhost:8000   # (or whatever ip your docker host is on)
+
 User: username2
+
 Pass: redactedlocalpass
