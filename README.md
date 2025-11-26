@@ -1,5 +1,5 @@
 # repo-mail
-Repossess your Google Workspace emails to a local Docker container. Don't let your emails be held hostage! Repo them! Also works for Microsoft or whatever other cloud email provider.
+Repossess your Google Workspace emails to a local Docker container. Don't let your emails be held hostage! Repo them! Also works for Microsoft or whatever other cloud email providers.
 
 ## Benefits
 Archive your emails locally and $top paying Google or Microsoft for old accounts. Protect against risk of loss of those accounts.
@@ -10,7 +10,7 @@ Say an employee leaves and you want to stop paying monthly for their cloud accou
 Or, what happens if the vendor (Google or Microsoft or whoever) decides they don't want you to use their system anymore? You would lose all your emails - what a disaster that would be.
 
 # Instructions
-1. Clone this repo or just download the appropriate files.
+1. Clone this repo.
 2. Search and replace the example usernames with your own email addresses.
 3. Copy down the emails to your local computer.
 4. Check that you have everything, then feel free to delete from your cloud account.
@@ -23,25 +23,29 @@ cd repo-mail
 ```
 ### Set up the right folders for your account(s)
 ```bash
-mkdir -p mail/username1
-mkdir -p mail/username2
-chown -R 1000:1000 mail/username1
-chown -R 1000:1000 mail/username2
+mkdir -p mail/username1             # adjust to alice if your email is alice@gmail.com
+mkdir -p mail/username2             # adjust to bob if your email is bob@mydomain.com
+chown -R 1000:1000 mail/username1   # alice
+chown -R 1000:1000 mail/username2   # bob
 chown -R 1000:1000 mail
 chown -R 1000:1000 mbsync
 mkdir -p roundcube/db
 chown -R 33:33 roundcube/db   # Make it owned by UID 33 (www-data) which is the user roundcube runs as
 ```
 ### Update usernames and passwords in `dovecot/users`
-`nano dovecot/users`
+```bash
+nano dovecot/users
+```
 ### Update usernames, passwords, configuration in `mbsync/.mbsyncrc`
-`nano mbsync/.mbsyncrc`
+```bash
+nano mbsync/.mbsyncrc
+```
 This part requires the most tinkering to fit your situation. The example is tuned for Google Workspace / Gmail. Adjust to accommodate your cloud provider. Please share (via pull request or other) examples for your cloud provider and I would be glad to update this repo!
 
 There are 2 example account blocks in this file:
 1. The first is for an account you want to keep using in the cloud, but you want a local backup/archive as insurance in case you lose the account.
 2. Second scenario applies if the account belongs to a former employee: preserve the emails, then deactivate the account and discontinue billing.
-3. Feel free to delete any account block that doesn't apply to your situation.
+*Feel free to delete any account block that doesn't apply to your situation.
 
 Search for these keywords and replace them with your own account information:
 - username1
@@ -96,7 +100,7 @@ d logout
 ```
 
 ### Log into Roundcube to verify everything is there.
-Go to: http://your.docker.host.ip:8000
+Go to: http://localhost:8000   # (or whatever ip your docker host is on)
 User: username2
 Pass: redactedlocalpass   # this is the password that you defined in `dovecot/users`
 #### Turn on folders (some of my preferred settings):
@@ -119,7 +123,9 @@ Honestly I would wait a month or three to see if this is a stable solution for y
 
 # Clean Up Local Account (After deleting the cloud account)
 Once you are happy that your account(s) are safely in `dovecot` and you have deleted the Google Workspace or other cloud account:
-`nano mbsync/.mbsyncrc`
+```bash
+nano mbsync/.mbsyncrc
+```
 ### and delete the entire "Account 2" or whatever section from `.mbsyncrc`.
 This prevents mbsync from trying to connect to a deleted account in the future.
 
@@ -129,7 +135,9 @@ You can set up a simple cronjob on your host machine to trigger the sync daily.
 
 Adapt the folder path below to wherever you set up your `repo-mail` folder.
 ## Add to crontab (This runs every day at 2:00 AM)
-`0 2 * * * cd /path/to/repo-mail && docker compose run --rm fetcher mbsync -c /home/app/config/.mbsyncrc long-term-username2-gmail`
+```bash
+0 2 * * * cd /path/to/repo-mail && docker compose run --rm fetcher mbsync -c /home/app/config/.mbsyncrc long-term-username2-gmail
+```
 ## If you want to sync all the blocks in `.mbsyncrc` then
 use `-a` above instead of `-c /home/app/config/.mbsyncrc long-term-username2-gmail`
 
@@ -157,6 +165,6 @@ tar -xzvf username2-mydomain-backup*.tar.gz -C repo-mail/
 cd repo-mail
 docker compose up -d
 ```
-Open roundcube http://<whatever-new-ip>:8000
+Open roundcube http://localhost:8000   # (or whatever ip your docker host is on)
 User: username2
 Pass: redactedlocalpass
