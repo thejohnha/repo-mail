@@ -1,0 +1,5 @@
+# These are the credentials for your locally hosted users AFTER you download them from your cloud provider.
+# Don't delete any users from this file or you won't be able to access the emails (after you downloaded from your cloud provider).
+# Just keep adding new users here as you locally archive more cloud accounts. Again, don't delete users or you'll lose local access!
+username1:{PLAIN}redactedlocalpass
+username2:{PLAIN}redactedlocalpass

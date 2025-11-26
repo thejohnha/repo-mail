@@ -1,0 +1,111 @@
+# Group 1 (long-term sync example): For username1@gmail.com
+# Group 2 (one-time sync example): For username2@mydomain.com
+# --- GLOBAL DEFAULTS ---
+Create Near    # Create local directories if they don't exist
+Sync Pull      # Only pull from Google, never push back deletions. Change to Sync All for maintained (instead of deleted) accounts.
+Expunge None   # Do not delete local files if they vanish from Google (Double safety for archiving).
+               # `Expunge Near` means if the gmail version is missing, then delete it locally.
+               # `Expunge Far` means if a file is missing on the Near side (local), delete it from Far (gmail).
+               # We defined `Channel username1-main` below:
+               # Far :username1-cloud:   <-- We defined this as the IMAPStore (Google)
+               # Near :username1-local:  <-- We defined this as the MaildirStore (Your Disk)
+
+# =====================================================
+# ACCOUNT 1: username1@gmail (Long Term Sync Example)
+# =====================================================
+IMAPAccount username1-remote
+Host imap.gmail.com
+User username1@gmail.com
+Pass "redacted_app_password"
+TLSType IMAPS
+AuthMechs LOGIN
+#PipelineDepth 50   # PipelineDepth 50 helps speed up the transfer on high latency connections.
+PipelineDepth 1     # PipelineDepth 1 is slow, but it is a safer way to download a large mailbox without getting banned.
+
+IMAPStore username1-cloud
+Account username1-remote
+
+MaildirStore username1-local
+# Path is the Maildir itself. Ensure this path matches the volume you mount to Dovecot
+Path /home/app/mail/username1/
+Inbox /home/app/mail/username1/Inbox
+# Verbatim - This creates real folders.
+SubFolders Verbatim
+
+# Channel 1: The Main Folders (Inbox, Sent, Drafts, Trash)
+Channel username1-main
+Far :username1-cloud:
+Near :username1-local:
+Pattern "[Gmail]/Drafts" "[Gmail]/Trash" "[Gmail]/Starred" "[Gmail]/Spam" "[Gmail]/All Mail"
+# Expunge Near   # Deletes local copy (Near) if deleted on gmail (Far). But if the account is deleted, it will [auto-]delete locally! (cronjob)
+
+# Channel 2: Custom Labels (excluding All Mail/Spam) - User Created Labels (The "Work", "Project X" stuff)
+Channel username1-labels
+Far :username1-cloud:
+Near :username1-local:
+# This captures "INBOX" and any custom user folders (e.g. "Work", "Receipts")
+Patterns * !"[Gmail]*"
+
+Group long-term-username1-gmail
+Channel username1-main
+Channel username1-labels
+
+
+# ================================================
+# ACCOUNT 2: username2@mydomain (One Time Clone)
+# ================================================
+IMAPAccount username2-remote
+Host imap.gmail.com
+User username2@mydomain.com
+Pass "redacted_app_password"
+TLSType IMAPS
+AuthMechs LOGIN
+PipelineDepth 50   # PipelineDepth 50 helps speed up the transfer on high latency connections.
+#PipelineDepth 1   # PipelineDepth 1 is slow, but it is a safer way to download a large mailbox without getting banned.
+
+IMAPStore username2-cloud
+Account username2-remote
+
+MaildirStore username2-local
+Path /home/app/mail/username2/
+Inbox /home/app/mail/username2/Inbox
+SubFolders Verbatim
+
+Channel username2-main
+Far :username2-cloud:
+Near :username2-local:
+# --- FOLDER LOGIC ---
+# "[Gmail]/All Mail"    - REQUIRED if you want to save "Archived" emails (no label).
+#                       - If YES: You get everything, but it duplicates Inbox/Sent (uses ~2x space).
+#                       - If NO:  You save space, but lose all archived/unlabeled mail.
+# "[Gmail]/Sent Mail"   - If you skip this (to save space), you can search All Mail to find sent items and move them to Sent (in Roundcube).
+# "[Gmail]/Drafts"      - Download (Unique data, not included in All Mail)
+# "[Gmail]/Trash"       - Download (Unique data, not included in All Mail)
+# "[Gmail]/Spam"        - Download (Unique data, not included in All Mail)
+# "[Gmail]/Starred"     - Download (Duplicative, but probably small)
+# "[Gmail]/Important"   - SKIP. It is 100% duplicated in All Mail/Inbox and is just algorithmic noise.
+# "INBOX"               - SKIP. It is already caught by the 'username2-labels' channel below `Pattern *`.
+
+# --- CHOOSE YOUR PATTERN ---
+# OPTION 1: The "Clean & Efficient" (Recommended if you don't care about 'Archived' mail)
+# result: Perfect Roundcube usability. Zero duplication. Loses hidden/archived mail.
+#Pattern "[Gmail]/Drafts" "[Gmail]/Trash" "[Gmail]/Starred" "[Gmail]/Spam" "[Gmail]/Sent Mail"
+
+# OPTION 2: The "Completionist" (Recommended for maximum safety)
+# result: Perfect Roundcube usability. Saves 100% of history. High duplication (Inbox/Sent stored twice).
+#Pattern "[Gmail]/Drafts" "[Gmail]/Trash" "[Gmail]/Starred" "[Gmail]/Spam" "[Gmail]/Sent Mail" "[Gmail]/All Mail"
+
+# OPTION 3: The "Space Saver" (Inbox is duplicated in All Mail, but some slight de-duplication of Sent Mail)
+# result: 100% History. Lower disk usage. "Sent" folder will be empty - but can manually move sent emails (search `from:username2@mydomain.com`) from All Mail to Sent folder.
+# Note that if you manually move Sent emails, then the All Mail folder in Roundcube will be misleading because it will be missing Sent Mail.
+Pattern "[Gmail]/Drafts" "[Gmail]/Trash" "[Gmail]/Starred" "[Gmail]/Spam" "[Gmail]/All Mail"
+
+Channel username2-labels
+Far :username2-cloud:
+Near :username2-local:
+# This captures "INBOX" and any custom user folders (e.g. "Work", "Receipts")
+Patterns * !"[Gmail]*"
+
+Group one-time-username2
+Channel username2-main
+Channel username2-labels

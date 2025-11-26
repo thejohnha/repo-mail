@@ -1,0 +1,45 @@
+services:
+  # 1. The Fetcher (mbsync)
+  fetcher:
+    build: ./mbsync                             # Builds the Dockerfile we just made
+    container_name: email_archive_fetcher
+    user: "1000:1000"                           # Run as Virtual User 1000
+    volumes:
+      - ./mail:/home/app/mail                   # Mail storage
+      - ./mbsync:/home/app/config:ro            # Config folder mount - User 1000
+    # No restart policy because this is a run-on-demand tool
+    # We don't want this running 24/7 yet, so we leave 'restart' off.
+    # It acts like a tool we invoke when needed.
+
+  # 2. The IMAP Server (Dovecot)
+  dovecot:
+    image: dovecot/dovecot:2.3.21.1
+    container_name: email_archive_dovecot
+    restart: unless-stopped
+    environment:
+      - DOVECOT_PASSDB_PASSWD_FILE_PATH=/etc/dovecot/users
+    volumes:
+      - ./mail:/srv/mail                    # Where the emails live and Dovecot sees them
+      - ./dovecot/users:/etc/dovecot/users:ro
+      - ./dovecot/dovecot.conf:/etc/dovecot/dovecot.conf:ro
+    ports:
+      - "143:143"                           # IMAP (StartTLS/Plain)
+
+  # 3. The Web Client (Roundcube)
+  roundcube:
+    # BUILD OUR CUSTOM IMAGE
+    build: ./roundcube_build
+#    image: roundcube/roundcubemail:latest
+    container_name: email_archive_roundcube
+    restart: unless-stopped
+    environment:
+      - ROUNDCUBEMAIL_DEFAULT_HOST=dovecot  # Connects to dovecot container
+      - ROUNDCUBEMAIL_SMTP_SERVER=None      # Disable sending
+      - ROUNDCUBEMAIL_PLUGINS=archive,zipdownload
+      - ROUNDCUBEMAIL_DB_TYPE=sqlite        # Tell Roundcube to use SQLite
+    volumes:
+      - ./roundcube/db:/var/roundcube/db    # Map directly to the internal default location
+    ports:
+      - "8000:80"
+    depends_on:
+      - dovecot
