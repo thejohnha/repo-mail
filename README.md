@@ -160,8 +160,8 @@ Backup each account into a separate `.tar.gz` file (along with all associated in
 ```bash
 cd repo-mail
 docker compose stop
-tar -czvf    username1-gmail-backup-$(date +%F).tar.gz docker-compose.yml mbsync/ dovecot/ roundcube/ roundcube_build/ mail/username1/
-tar -czvf username2-mydomain-backup-$(date +%F).tar.gz docker-compose.yml mbsync/ dovecot/ roundcube/ roundcube_build/ mail/username2/
+tar -czvf    username1-gmail-backup-$(date +%F).tar.gz compose.yaml mbsync/ dovecot/ roundcube/ roundcube_build/ mail/username1/
+tar -czvf username2-mydomain-backup-$(date +%F).tar.gz compose.yaml mbsync/ dovecot/ roundcube/ roundcube_build/ mail/username2/
 docker compose up -d
 ```
 ## Safely move the `tar.gz` archives somewhere for storage
